@@ -1,0 +1,23 @@
+= Wildfly, Quarkus og brugen af specifikationer (Java EE 8)
+
+Dette indlæg bliver en introduktion til https://quay.io/[Quarkus] med udgangspunkt i en simpel ToDo applikation.
+
+Vi ser på hvordan koden skrivet til Java EE 8 specifikation, kan laves om til Quarkus kode.
+
+Vi vil se på disse punkter i gennemgangen
+
+-   Konfiguration af applikationen
+-   Rest service
+-   Persistering af data i database (PostgreSQL) med JPA (Hibernate)
+-   Tilføj sikkerhed til applikationen
+-   Tilføj Health
+-   Tilføj Metrics
+-   Tilføj OpenAPI (swagger)
+
+Applikationen afvikler vi med https://quay.io/[Quarkus] og https://wildfly.org/[Wilædfly].
+
+Koden vil blive startet fra
+
+- Terminal
+- Docker
+- Kubernetes (minikube)
