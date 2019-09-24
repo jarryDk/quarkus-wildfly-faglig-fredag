@@ -2,7 +2,7 @@
 
 Dette indlæg bliver en introduktion til https://quay.io/[Quarkus] med udgangspunkt i en simpel ToDo applikation.
 
-Vi ser på hvordan koden skrivet til Java EE 8 specifikation, kan laves om til Quarkus kode.
+Vi ser på hvordan kode skrivet til Java EE 8 specifikation, kan laves om til Quarkus.
 
 Vi vil se på disse punkter i gennemgangen
 
