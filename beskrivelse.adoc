@@ -1,0 +1,13 @@
+Dette indlæg bliver en introduktion til Quarkus med udgangspunkt i en simpel ToDo applikation.
+
+Vi ser på hvordan kode skrevet til Java EE 8 specifikation, kan laves om til Quarkus. 
+
+Vi skal se på hvordan vi håndtere konfiguration, rest service, jpa, cdi, sikkerhed, health, matrics og OpenAPI.
+
+Undervej vil vi afvikle koden på Quarkus og Wildfly startet fra Terminal, Docker og Kubernetes (minikube).
+
+Michael Bornholdt Nielsen er java-udvikler og integrationsspecialist med mange års erfaring. 
+Han har arbejder med Java side første møde med sproget på ITU tilbage i 1999. 
+Som integrationsspecialist har Wildfly haft en fast plads på holdet. 
+Efter at have arbejdet med integrationer i det offentlige i en årrække hos Convergens, har 
+Michael siden nytår være konsulent hos Redpill Linpro.   
