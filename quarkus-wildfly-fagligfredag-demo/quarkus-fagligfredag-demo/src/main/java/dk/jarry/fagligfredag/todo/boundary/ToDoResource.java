@@ -2,6 +2,12 @@ package dk.jarry.fagligfredag.todo.boundary;
 
 import java.util.List;
 
+import java.security.Principal;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.SecurityContext;
+import org.eclipse.microprofile.jwt.JsonWebToken;
+import javax.annotation.security.DenyAll;
+
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
@@ -26,6 +32,9 @@ import dk.jarry.fagligfredag.todo.entity.ToDo;
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public class ToDoResource {
+
+	@Inject
+    JsonWebToken jwt;
 
 	@Inject
 	ToDoService toDoService;
@@ -67,4 +76,47 @@ public class ToDoResource {
 			@QueryParam("limit") Long limit) {
 		return toDoService.list(from, limit);
 	}
+
+	@GET()
+    @Path("permit-all")
+    @PermitAll
+    @Produces(MediaType.TEXT_PLAIN)
+    public String hello(@Context SecurityContext ctx) {
+        Principal caller =  ctx.getUserPrincipal();
+        String name = caller == null ? "anonymous" : caller.getName();
+        boolean hasJWT = jwt.getClaimNames() != null;
+		String helloReply = String.format("hello + %s, isSecure: %s, authScheme: %s, hasJWT: %s", 
+			name, 
+			ctx.isSecure(), 
+			ctx.getAuthenticationScheme(), 
+			hasJWT);
+        return helloReply;
+	}
+	
+	@GET()
+    @Path("roles-allowed")
+    @RolesAllowed({"Echoer", "Subscriber"})
+    @Produces(MediaType.TEXT_PLAIN)
+    public String helloRolesAllowed(@Context SecurityContext ctx) {
+        Principal caller =  ctx.getUserPrincipal();
+        String name = caller == null ? "anonymous" : caller.getName();
+        boolean hasJWT = jwt.getClaimNames() != null;
+		String helloReply = String.format("hello + %s, isSecure: %s, authScheme: %s, hasJWT: %s", 
+			name, 
+			ctx.isSecure(), 
+			ctx.getAuthenticationScheme(), 
+			hasJWT);
+        return helloReply;
+    }
+
+    @GET()
+    @Path("deny-all")
+    @DenyAll
+    @Produces(MediaType.TEXT_PLAIN)
+    public String helloShouldDeny(@Context SecurityContext ctx) {
+        Principal caller =  ctx.getUserPrincipal();
+        String name = caller == null ? "anonymous" : caller.getName();
+        return "hello + " + name;
+    }
+
 }
