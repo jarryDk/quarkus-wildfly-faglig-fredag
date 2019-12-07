@@ -1,0 +1,82 @@
+= Wildfly, Quarkus og brugen af specifikationer (Java EE 8)
+
+== Wildfly
+
+https://wildfly.org/[Wildfly]
+
+- JBoss EAP 7.1 (Wildfly 14)
+- Java EE 8
+- Jakarta EE 8
+- Moduler
+
+== Microprofile
+
+https://microprofile.io/[Microprofile]
+
+
+
+image::https://microprofile.io/wp-content/uploads/2019/11/MP-3.2-picture-1024x593.png[Eclipse MicroProfile 3.2 is Now Available]
+
+https://microprofile.io/2019/11/11/eclipse-microprofile-3-2-is-now-available/[Eclipse MicroProfile 3.2 is Now Available]
+
+== Quarkus
+
+https://quay.io/[Quarkus]
+
+https://www.graalvm.org/[GraalVM]
+
+
+https://quarkus.io/guides/cdi-reference[Quarkus - Contexts and Dependency Injection]
+
+=== Extensions
+
+- Sammenligninh med Wildflys moduler
+- https://code.quarkus.io/[Quarkus - Start coding with code.quarkus.io]
+
+=== Quarkus og Maven
+
+[source,bash]
+----
+./mvnw compile quarkus:dev
+----
+
+[source,bash]
+----
+./mvnw package -Pnative
+----
+
+
+== ToDo gennemgang
+
+Dette bliver en introduktion til https://quay.io/[Quarkus] med udgangspunkt i en simpel ToDo applikation.
+
+Vi ser på hvordan kode skrevet til Java EE 8 specifikation, kan laves om til Quarkus.
+
+Vi vil se på disse punkter i gennemgangen
+
+-   Konfiguration af applikationen
+-   Rest service
+-   Persistering af data i database (PostgreSQL) med JPA (Hibernate)
+-   Tilføj sikkerhed til applikationen
+-   Tilføj Health
+-   Tilføj Metrics
+-   Tilføj OpenAPI (swagger)
+
+Applikationen afvikler vi med https://quay.io/[Quarkus] og https://wildfly.org/[Wildfly].
+
+Koden vil blive startet fra
+
+- Terminal
+- Docker
+- Kubernetes (minikube)
+
+=== Test @QuarkusTest
+
+
+== Bookstore gennemgang
+
+=== Author JAX-RX + service
+
+=== Book JAX-RX + extends PanacheEntity
+
+=== Publisher RestController/RequestMapping (Spring) + service
