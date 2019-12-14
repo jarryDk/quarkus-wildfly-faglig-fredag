@@ -1,4 +1,6 @@
 = Wildfly, Quarkus og brugen af specifikationer (Java EE 8)
+:toc:
+:toc-title: Hvad skal jeg tale om 
 
 == Wildfly
 
@@ -8,6 +10,8 @@ https://wildfly.org/[Wildfly]
 - Java EE 8
 - Jakarta EE 8
 - Moduler
+
+image::https://www.oreilly.com/library/view/building-restful-web/9781789532883/assets/c37711d0-1ac4-47bd-bcd9-97c41e463bd2.png[Java EE 8 Spec]
 
 == Microprofile
 
@@ -33,7 +37,7 @@ https://quarkus.io/guides/cdi-reference[Quarkus - Contexts and Dependency Inject
 - Sammenligninh med Wildflys moduler
 - https://code.quarkus.io/[Quarkus - Start coding with code.quarkus.io]
 
-=== Quarkus og Maven
+=== Maven
 
 [source,bash]
 ----
@@ -44,7 +48,6 @@ https://quarkus.io/guides/cdi-reference[Quarkus - Contexts and Dependency Inject
 ----
 ./mvnw package -Pnative
 ----
-
 
 == ToDo gennemgang
 
@@ -69,6 +72,116 @@ Koden vil blive startet fra
 - Terminal
 - Docker
 - Kubernetes (minikube)
+
+=== MicroProfile Config
+
+PingResource
+
+[source,java]
+----
+
+@ConfigProperty(name = "pingMessage", defaultValue = "pingMessage need config..")
+----
+
+- ENV
+- Propeties
+
+
+=== JAX-RS
+
+[source,java]
+----
+@Path("todos")
+@Consumes(MediaType.APPLICATION_JSON)
+@Produces(MediaType.APPLICATION_JSON)
+----
+
+=== Persistering af data
+
+- hibernate
+
+[source,java]
+----
+
+@Inject
+EntityManager entityManager;
+----
+
+=== Sikkerhed
+
+[source,java]
+----
+@Inject
+Principal principal;
+----
+
+[source,java]
+----
+@Inject
+JsonWebToken jwt;
+----
+
+[source,bash]
+----
+
+export TOKEN="eyJraWQiOiIvcHJpdmF0ZUtleS5wZW0iLCJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJodHRwczovL3F1YXJrdXMuaW8vdXNpbmctand0LXJiYWMiLCJqdGkiOiJhLTEyMyIsInN1YiI6Im1pY2JuLXVzaW5nLWp3dC1yYmFjIiwidXBuIjoibWljYm5AcmVkcGlsbC1saW5wcm8uY29tIiwicHJlZmVycmVkX3VzZXJuYW1lIjoibWljYm4iLCJhdWQiOiJ1c2luZy1qd3QtcmJhYyIsImJpcnRoZGF0ZSI6IjIwMDEtMDctMTMiLCJyb2xlTWFwcGluZ3MiOnsiZ3JvdXAxIjoiR3JvdXAxTWFwcGVkUm9sZSIsImdyb3VwMiI6Ikdyb3VwMk1hcHBlZFJvbGUifSwiZ3JvdXBzIjpbIkVjaG9lciIsIlRlc3RlciIsIlN1YnNjcmliZXIiLCJncm91cDIiLCJ1c2VyIl0sImlhdCI6MTU3NjM0MDQ2MiwiYXV0aF90aW1lIjoiTnVtZXJpY0RhdGV7MTU3NjM0MDQ2MiAtPiAxNC1EZWMtMjAxOSAxNzoyMTowMiBDRVR9IiwiZXhwIjoxNTc2MzQwNzYyfQ.hDISXcd3I8wBlgIA8rIoEYJ0r4b1mvUX6x2FmmNQFPNT7Fru2XMKO-rhV_j57dJOr3LyYv4BZSuaJiO8khuYW7ICjdY59aRX4Gkup4cnuOPG6KP8RR-aQDgKCEMSGyjjmH8dgc2W-L1ZonBRVQ-MgokIpOoFneYf8ONuJXOEVXkS2_SxJh01L4bPwuOG4aAj_YamPbj8wRKYsWzgg1tE7B2glaqcEXKzsAhX4hpqqwAg4SNsVrl_QI5Ogwfdwr4jBqmNNJ-ArIPoCaxT_660KRHbFn_fqtKOGSeiWcuDxCbeKPNEr8Yz4MP_khJluR8A-R2v4CEfH72Ca0vYRIS8Rw"
+
+curl -X POST  http://localhost:8080/todos \
+	-H 'Accept: application/json' \
+	-H 'Authorization: Bearer $TOKEN' \
+	-H 'Content-Type: application/json' \
+	-d '{"subject":"Hello from Wildfly","body":"We need content","priority": 1,"importens": 10,"owner" : "Duke"}'
+----
+
+=== MicroProfile Health
+
+
+[source,bash]
+----
+curl -X GET \
+	http://localhost:8080/health \
+	-H 'Accept: application/json' 
+----
+
+
+https://quarkus.io/guides/health-guide[quarkus.io - Health Guide]
+
+
+=== MicroProfile Metrics
+
+[source,bash]
+----
+curl -X GET \
+	http://localhost:8080/metrics/application \
+	-H 'Accept: application/json' 
+----
+
+https://quarkus.io/guides/metrics-guide[quarkus.io - Metrics Guide]
+
+=== OpenAPI and SwaggerUI
+
+Just add `quarkus-smallrye-openapi` as a dependency in `pom.xml` and https://en.wikipedia.org/wiki/Bob%27s_your_uncle[Bob is your uncle].
+
+[source,xml]
+----
+<dependency>
+	<groupId>io.quarkus</groupId>
+	<artifactId>quarkus-smallrye-openapi</artifactId>
+</dependency>
+----
+
+- http://localhost:8080/openapi[OpenAPI]
+- http://localhost:8080/swagger-ui[swagger-ui]
+
+OpenAPI and Swagger-UI only works in dev and test mode. 
+
+[source,bash]
+----
+./mvnw compile quarkus:dev
+----
+
+https://quarkus.io/guides/openapi-swaggerui-guide[quarkus.io - OpenAPI SwaggerUI Guide]
+
 
 === Test @QuarkusTest
 
