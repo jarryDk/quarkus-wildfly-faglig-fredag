@@ -63,7 +63,7 @@ public class ToDoResource {
 
 	@DELETE
 	@Path("{id}")
-	@RolesAllowed("user")
+	@PermitAll
 	public void delete(@PathParam("id") Integer id) {
 		toDoService.delete(id);
 	}

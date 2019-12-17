@@ -27,6 +27,7 @@ public class GenerateToken {
             timeClaims.put(Claims.exp.name(), exp);
         }
         String token = TokenUtils.generateTokenString(claimsJson, timeClaims);
-        System.out.println(token);
+        System.out.println("");
+        System.out.println("export TOKEN=\"" + token + "\"");
     }
 }

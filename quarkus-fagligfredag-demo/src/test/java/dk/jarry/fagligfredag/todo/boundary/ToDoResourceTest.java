@@ -51,7 +51,7 @@ public class ToDoResourceTest {
 
         response.then()
           .statusCode(200)
-          .body(containsString("hello + micbn@redpill-linpro.com, isSecure: false, authScheme: Quarkus, hasJWT: true"));
+          .body(containsString("hello + micbn@redpill-linpro.com, isSecure: false, authScheme: Bearer, hasJWT: true"));
     }
 
     @Test

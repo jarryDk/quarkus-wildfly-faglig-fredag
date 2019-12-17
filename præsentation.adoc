@@ -1,4 +1,5 @@
 = Wildfly, Quarkus og brugen af specifikationer (Java EE 8)
+Michael Bornholdt Nielsen michaelbornholdtnielsen@gmail.com
 :toc:
 :toc-title: Hvad skal jeg tale om 
 
@@ -10,6 +11,7 @@ https://wildfly.org/[Wildfly]
 - Java EE 8
 - Jakarta EE 8
 - Moduler
+- beans.xml
 
 image::https://www.oreilly.com/library/view/building-restful-web/9781789532883/assets/c37711d0-1ac4-47bd-bcd9-97c41e463bd2.png[Java EE 8 Spec]
 
@@ -25,16 +27,26 @@ https://microprofile.io/2019/11/11/eclipse-microprofile-3-2-is-now-available/[Ec
 
 == Quarkus
 
-https://quay.io/[Quarkus]
+*Supersonic Subatomic Java*
+
+A Kubernetes Native Java stack tailored for OpenJDK HotSpot and GraalVM, crafted from the best of breed Java libraries and standards.
+
+image::https://quarkus.io/assets/images/quarkus_metrics_graphic_bootmem_wide.png[Quarkus]
+
+https://quarkus.io/[Quarkus]
 
 https://www.graalvm.org/[GraalVM]
 
 
-https://quarkus.io/guides/cdi-reference[Quarkus - Contexts and Dependency Injection]
+Dependency Injection
+
+- https://quarkus.io/guides/cdi-reference[Quarkus - Contexts and Dependency Injection]
+- https://weld.cdi-spec.org/[Weld] 
+- beans.xml vs. annotations
 
 === Extensions
 
-- Sammenligninh med Wildflys moduler
+- Sammenligning med Wildflys moduler
 - https://code.quarkus.io/[Quarkus - Start coding with code.quarkus.io]
 
 === Maven
@@ -46,12 +58,19 @@ https://quarkus.io/guides/cdi-reference[Quarkus - Contexts and Dependency Inject
 
 [source,bash]
 ----
+./mvnw clean package
+java -jar target/quarkus-fagligfredag-demo-0.0.1-SNAPSHOT-runner.jar
+----
+
+[source,bash]
+----
 ./mvnw package -Pnative
+./target/quarkus-fagligfredag-demo-0.0.1-SNAPSHOT-runner
 ----
 
 == ToDo gennemgang
 
-Dette bliver en introduktion til https://quay.io/[Quarkus] med udgangspunkt i en simpel ToDo applikation.
+Dette bliver en introduktion til https://quarkus.io/[Quarkus] med udgangspunkt i en simpel ToDo applikation.
 
 Vi ser på hvordan kode skrevet til Java EE 8 specifikation, kan laves om til Quarkus.
 
@@ -65,13 +84,14 @@ Vi vil se på disse punkter i gennemgangen
 -   Tilføj Metrics
 -   Tilføj OpenAPI (swagger)
 
-Applikationen afvikler vi med https://quay.io/[Quarkus] og https://wildfly.org/[Wildfly].
+Applikationen afvikler vi med https://quarkus.io/[Quarkus] og https://wildfly.org/[Wildfly].
 
 Koden vil blive startet fra
 
 - Terminal
 - Docker
 - Kubernetes (minikube)
+
 
 === MicroProfile Config
 
@@ -98,13 +118,55 @@ PingResource
 
 === Persistering af data
 
-- hibernate
+Hibernate
 
 [source,java]
 ----
 
 @Inject
 EntityManager entityManager;
+----
+
+
+*Wildfly* - persistence.xml
+[source,xml]
+----
+<persistence xmlns="http://xmlns.jcp.org/xml/ns/persistence"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence
+    http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd"
+	version="2.1">
+
+	<persistence-unit name="ToDoPU" transaction-type="JTA">
+		<description>My ToDo entities</description>
+ 		<jta-data-source>jboss/datasources/ToDoDS</jta-data-source>
+		<properties>
+			<property name="hibernate.dialect" 
+				value="org.hibernate.dialect.PostgreSQL95Dialect" />
+			<property name="hibernate.show_sql" 
+				value="false" />
+			<property name="hibernate.format_sql" 
+				value="true" />
+			<property name="javax.persistence.schema-generation.database.action" 
+				value="drop-and-create" />
+			<property name="javax.persistence.validation.mode" 
+				value="NONE" />
+		</properties>
+	</persistence-unit>
+
+</persistence>
+----
+
+*Quarkus* - application.properties
+----
+quarkus.datasource.url=jdbc:postgresql://PostgreSQLDemo:5432/hibernate_db
+quarkus.datasource.driver=org.postgresql.Driver
+quarkus.datasource.username=hibernate
+quarkus.datasource.password=hibernate
+quarkus.datasource.max-size=8
+quarkus.datasource.min-size=2
+quarkus.hibernate-orm.database.generation=drop-and-create
+quarkus.hibernate-orm.log.sql=false
 ----
 
 === Sikkerhed
@@ -121,20 +183,24 @@ Principal principal;
 JsonWebToken jwt;
 ----
 
+
 [source,bash]
 ----
 
-export TOKEN="eyJraWQiOiIvcHJpdmF0ZUtleS5wZW0iLCJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJodHRwczovL3F1YXJrdXMuaW8vdXNpbmctand0LXJiYWMiLCJqdGkiOiJhLTEyMyIsInN1YiI6Im1pY2JuLXVzaW5nLWp3dC1yYmFjIiwidXBuIjoibWljYm5AcmVkcGlsbC1saW5wcm8uY29tIiwicHJlZmVycmVkX3VzZXJuYW1lIjoibWljYm4iLCJhdWQiOiJ1c2luZy1qd3QtcmJhYyIsImJpcnRoZGF0ZSI6IjIwMDEtMDctMTMiLCJyb2xlTWFwcGluZ3MiOnsiZ3JvdXAxIjoiR3JvdXAxTWFwcGVkUm9sZSIsImdyb3VwMiI6Ikdyb3VwMk1hcHBlZFJvbGUifSwiZ3JvdXBzIjpbIkVjaG9lciIsIlRlc3RlciIsIlN1YnNjcmliZXIiLCJncm91cDIiLCJ1c2VyIl0sImlhdCI6MTU3NjM0MDQ2MiwiYXV0aF90aW1lIjoiTnVtZXJpY0RhdGV7MTU3NjM0MDQ2MiAtPiAxNC1EZWMtMjAxOSAxNzoyMTowMiBDRVR9IiwiZXhwIjoxNTc2MzQwNzYyfQ.hDISXcd3I8wBlgIA8rIoEYJ0r4b1mvUX6x2FmmNQFPNT7Fru2XMKO-rhV_j57dJOr3LyYv4BZSuaJiO8khuYW7ICjdY59aRX4Gkup4cnuOPG6KP8RR-aQDgKCEMSGyjjmH8dgc2W-L1ZonBRVQ-MgokIpOoFneYf8ONuJXOEVXkS2_SxJh01L4bPwuOG4aAj_YamPbj8wRKYsWzgg1tE7B2glaqcEXKzsAhX4hpqqwAg4SNsVrl_QI5Ogwfdwr4jBqmNNJ-ArIPoCaxT_660KRHbFn_fqtKOGSeiWcuDxCbeKPNEr8Yz4MP_khJluR8A-R2v4CEfH72Ca0vYRIS8Rw"
+export TOKEN="eyJraWQiOiIvcHJpdmF0ZUtleS5wZW0iLCJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJodHRwczovL3F1YXJrdXMuaW8vdXNpbmctand0LXJiYWMiLCJqdGkiOiJhLTEyMyIsInN1YiI6Im1pY2JuLXVzaW5nLWp3dC1yYmFjIiwidXBuIjoibWljYm5AcmVkcGlsbC1saW5wcm8uY29tIiwicHJlZmVycmVkX3VzZXJuYW1lIjoibWljYm4iLCJhdWQiOiJ1c2luZy1qd3QtcmJhYyIsImJpcnRoZGF0ZSI6IjIwMDEtMDctMTMiLCJyb2xlTWFwcGluZ3MiOnsiZ3JvdXAxIjoiR3JvdXAxTWFwcGVkUm9sZSIsImdyb3VwMiI6Ikdyb3VwMk1hcHBlZFJvbGUifSwiZ3JvdXBzIjpbIkVjaG9lciIsIlRlc3RlciIsIlN1YnNjcmliZXIiLCJncm91cDIiLCJ1c2VyIl0sImlhdCI6MTU3NjM0MTk2OSwiYXV0aF90aW1lIjoiTnVtZXJpY0RhdGV7MTU3NjM0MTk2OSAtPiAxNC1EZWMtMjAxOSAxNzo0NjowOSBDRVR9IiwiZXhwIjoxNTc2MzQyMjY5fQ.FYGtGIT_iU2hEF2F_XvjMXyCzCD7_Q4UXpNwhRJhpbRTqhFOeqQ-1yJllr6xs1oXH7OdRNovmqXjVZp3NEARwF7we-bm_h1TFPOQECeHGl8jvE7Ig9Cx0wL0QDxCUQKLQ1pOa9RSwy-_BkkJ0d3Nukn-Q871a6wm34syIWYB10KWWnm9CBRpeTRkA9YO-_xNhFqkmeDSkUfdHvoRbXbHEgg_TtB3_IOJp1xtC5xmrytm0Q-CmwdxnpHwAPfgVCJLPqg2bI_20_ESkKvLeMkFWTV3ReHSr4GNkEWOAcmCCajP9kizvftoPO2WyB0AkcdgzPLgW4_5D6Sd3L64ER8S9Q"
 
-curl -X POST  http://localhost:8080/todos \
+curl -v http://localhost:8080/todos \
 	-H 'Accept: application/json' \
-	-H 'Authorization: Bearer $TOKEN' \
+	-H 'Authorization: Bearer '$TOKEN'' \
 	-H 'Content-Type: application/json' \
-	-d '{"subject":"Hello from Wildfly","body":"We need content","priority": 1,"importens": 10,"owner" : "Duke"}'
+	-d '{"subject":"Hello from Quarkus","body":"Content","priority": 1,"importens": 10,"owner" : "Duke"}'
 ----
 
 === MicroProfile Health
 
+----
+@Health
+----
 
 [source,bash]
 ----
@@ -183,7 +249,6 @@ OpenAPI and Swagger-UI only works in dev and test mode.
 https://quarkus.io/guides/openapi-swaggerui-guide[quarkus.io - OpenAPI SwaggerUI Guide]
 
 
-=== Test @QuarkusTest
 
 
 == Bookstore gennemgang
@@ -193,3 +258,81 @@ https://quarkus.io/guides/openapi-swaggerui-guide[quarkus.io - OpenAPI SwaggerUI
 === Book JAX-RX + extends PanacheEntity
 
 === Publisher RestController/RequestMapping (Spring) + service
+
+=== Test @QuarkusTest
+
+
+== Appendix
+
+[source,bash]
+----
+
+export TOKEN="eyJraWQiOiIvcHJpdmF0ZUtleS5wZW0iLCJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJodHRwczovL3F1YXJrdXMuaW8vdXNpbmctand0LXJiYWMiLCJqdGkiOiJhLTEyMyIsInN1YiI6Im1pY2JuLXVzaW5nLWp3dC1yYmFjIiwidXBuIjoibWljYm5AcmVkcGlsbC1saW5wcm8uY29tIiwicHJlZmVycmVkX3VzZXJuYW1lIjoibWljYm4iLCJhdWQiOiJ1c2luZy1qd3QtcmJhYyIsImJpcnRoZGF0ZSI6IjIwMDEtMDctMTMiLCJyb2xlTWFwcGluZ3MiOnsiZ3JvdXAxIjoiR3JvdXAxTWFwcGVkUm9sZSIsImdyb3VwMiI6Ikdyb3VwMk1hcHBlZFJvbGUifSwiZ3JvdXBzIjpbIkVjaG9lciIsIlRlc3RlciIsIlN1YnNjcmliZXIiLCJncm91cDIiLCJ1c2VyIl0sImlhdCI6MTU3NjYwNjM5NiwiYXV0aF90aW1lIjoiTnVtZXJpY0RhdGV7MTU3NjYwNjM5NiAtPiAxNy1EZWMtMjAxOSAxOToxMzoxNiBDRVR9IiwiZXhwIjoxNTc2NjA2Njk2fQ.JTgLJ7hZbkorNEg0OTyNPNAQ8_7v23ElXX2oZNBWF-19I6k0BcnIPnydHs4Dylj3JsFtgeWSvhniv4dcEwBGphqLWKor_hG305Xv5YDiWvj0o-9xhhEDALRvO5ycjXwt69E8YN-YA-GdYgLyLhStSUZFjN3vMWQTO2U9UaO8jLcwZ239Z7rtw5XFy3vC9TxvDlGaPOiyBJSwagpi2oqIcdvlTHW6pB-J3lM0B5gheHlM2btHYnqFKsviCI5Jvo9TziM8Zm1rPi4xq0yZn8Es5zVLMvrOpji5pqlCC3TkSKSomnRCC3NFKLmxGCYYM_m9KRJWGbJCsmACY30ptM6o2A"
+
+curl -v http://localhost:8080/todos \
+	-H 'Accept: application/json' \
+	-H 'Authorization: Bearer '$TOKEN'' \
+	-H 'Content-Type: application/json' \
+	-d '{"subject":"Hello from Quarkus","body":"Content","priority": 1,"importens": 10,"owner" : "Duke"}'
+
+curl -v http://localhost:8080/todos \
+	-H 'Accept: application/json' \
+	-H 'Authorization: Bearer '$TOKEN'' \
+	-H 'Content-Type: application/json' \
+	-d '{"subject":"Hello from Quarkus 2","body":"Content 2","priority": 1,"importens": 10,"owner" : "Duke"}'	
+----
+
+
+[source,bash]
+----
+docker network inspect demo-net
+----
+
+[source,bash]
+----
+docker network create demo-net
+----
+
+[source,bash]
+----
+docker run --ulimit memlock=-1:-1 \
+	-it --rm=true --memory-swappiness=0 \
+	--name PostgreSQLDemo \
+	--network demo-net \
+	-e POSTGRES_USER=hibernate \
+	-e POSTGRES_PASSWORD=hibernate \
+	-e POSTGRES_DB=hibernate_db \
+	-p 5432:5432 postgres:10.5
+----
+
+[source,bash]
+----
+docker build -f src/main/docker/Dockerfile.native -t quarkus-fagligfredag-demo .
+----
+
+[source,bash]
+----
+docker run -i --rm --name quarkus-fagligfredag --network demo-net -p 8080:8080 quarkus-fagligfredag-demo
+----
+
+Tilføj postgres til minikube.
+
+[source,bash]
+----
+kubectl run postgresqldemo \
+	--image=postgres:10.5 \
+	--port=5432 \
+	--env=POSTGRES_USER=hibernate \
+	--env=POSTGRES_PASSWORD=hibernate \
+	--env=POSTGRES_DB=hibernate_db \
+	--image-pull-policy=IfNotPresent
+
+kubectl expose deployment postgresqldemo --type=NodePort
+----
+
+[source,bash]
+----
+minikube dashboard --url
+minikube service pgadmin --url
+minikube service postgresqldemo --url
+----
