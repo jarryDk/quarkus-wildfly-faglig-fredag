@@ -315,7 +315,7 @@ docker build -f src/main/docker/Dockerfile.native -t quarkus-fagligfredag-demo .
 docker run -i --rm --name quarkus-fagligfredag --network demo-net -p 8080:8080 quarkus-fagligfredag-demo
 ----
 
-Tilføj postgres til minikube.
+Start postgres på minikube.
 
 [source,bash]
 ----
@@ -330,9 +330,45 @@ kubectl run postgresqldemo \
 kubectl expose deployment postgresqldemo --type=NodePort
 ----
 
+Start quarkus-fagligfredag-demo på minikube.
+
+[source,bash]
+----
+kubectl run quarkus-fagligfredag-demo \
+	--port=8080 \
+	--image=quarkus-fagligfredag-demo:latest \
+	--image-pull-policy=IfNotPresent
+
+kubectl expose deployment quarkus-fagligfredag-demo --type=LoadBalancer	--name=quarkus-fagligfredag-demo-service
+----
+
+
+[source,bash]
+----
+kubectl get all
+----
+
+
+[source,bash]
+----
+kubectl delete deployment.apps/quarkus-fagligfredag-demo
+----
+
 [source,bash]
 ----
 minikube dashboard --url
 minikube service pgadmin --url
 minikube service postgresqldemo --url
+minikube service quarkus-fagligfredag-demo-service --url
+----
+
+[source,bash]
+----
+eval $(minikube docker-env)
+----
+
+
+[source,bash]
+----
+eval $(minikube docker-env -u)
 ----
