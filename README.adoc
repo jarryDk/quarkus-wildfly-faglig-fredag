@@ -1,6 +1,76 @@
 = Wildfly, Quarkus og brugen af specifikationer (Java EE 8)
+Michael Bornholdt Nielsen michaelbornholdtnielsen@gmail.com
+:toc:
+:toc-title: Hvad skal jeg tale om 
 
-Dette indlæg bliver en introduktion til https://quay.io/[Quarkus] med udgangspunkt i en simpel ToDo applikation.
+== Wildfly
+
+https://wildfly.org/[Wildfly]
+
+- JBoss EAP 7.1 (Wildfly 14)
+- Java EE 8
+- Jakarta EE 8
+- Moduler
+- beans.xml
+
+image::images/javaee.png[Java EE 8 Spec]
+
+== Microprofile
+
+https://microprofile.io/[Microprofile]
+
+
+
+image::images/mp.png[Eclipse MicroProfile 3.2 is Now Available]
+
+https://microprofile.io/2019/11/11/eclipse-microprofile-3-2-is-now-available/[Eclipse MicroProfile 3.2 is Now Available]
+
+== Quarkus
+
+*Supersonic Subatomic Java*
+
+A Kubernetes Native Java stack tailored for OpenJDK HotSpot and GraalVM, crafted from the best of breed Java libraries and standards.
+
+image::images/quarkus.png[Quarkus]
+
+https://quarkus.io/[Quarkus]
+
+https://www.graalvm.org/[GraalVM]
+
+
+Dependency Injection
+
+- https://quarkus.io/guides/cdi-reference[Quarkus - Contexts and Dependency Injection]
+- https://weld.cdi-spec.org/[Weld] 
+- beans.xml vs. annotations
+
+=== Extensions
+
+- Sammenligning med Wildflys moduler
+- https://code.quarkus.io/[Quarkus - Start coding with code.quarkus.io]
+
+=== Maven
+
+[source,bash]
+----
+./mvnw compile quarkus:dev
+----
+
+[source,bash]
+----
+./mvnw clean package
+java -jar target/quarkus-fagligfredag-demo-0.0.1-SNAPSHOT-runner.jar
+----
+
+[source,bash]
+----
+./mvnw package -Pnative
+./target/quarkus-fagligfredag-demo-0.0.1-SNAPSHOT-runner
+----
+
+== ToDo gennemgang
+
+Dette bliver en introduktion til https://quarkus.io/[Quarkus] med udgangspunkt i en simpel ToDo applikation.
 
 Vi ser på hvordan kode skrevet til Java EE 8 specifikation, kan laves om til Quarkus.
 
@@ -14,7 +84,7 @@ Vi vil se på disse punkter i gennemgangen
 -   Tilføj Metrics
 -   Tilføj OpenAPI (swagger)
 
-Applikationen afvikler vi med https://quay.io/[Quarkus] og https://wildfly.org/[Wilædfly].
+Applikationen afvikler vi med https://quarkus.io/[Quarkus] og https://wildfly.org/[Wildfly].
 
 Koden vil blive startet fra
 
@@ -23,195 +93,71 @@ Koden vil blive startet fra
 - Kubernetes (minikube)
 
 
-== Before running the demo
+=== MicroProfile Config
 
-We need to be able access PostgreSQL.  
+PingResource
 
-*/etc/hosts*
-
-----
-127.0.0.1	postgresqldemo
+[source,java]
 ----
 
-=== Terminal
-
-We need a running PostgreSQL - local or in docker.
-
-=== Docker 
-
-==== Network
-
-*Create the network*
-[source,bash]
-----
-docker network create demo-net
+@ConfigProperty(name = "pingMessage", defaultValue = "pingMessage need config..")
 ----
 
-*Inspect the network*
-[source,bash]
+- ENV
+- Propeties
+
+
+=== JAX-RS
+
+[source,java]
 ----
-docker network inspect demo-net
-----
-
-https://docs.docker.com/network/network-tutorial-standalone/[docker.com - Networking with standalone containers | Docker Documentation]
-
-
-==== Run PostgreSQL on Docker
-
-First we will need a PostgreSQL database; you can launch one easily if you have Docker installed:
-
-[source,bash]
-----
-docker run --ulimit memlock=-1:-1 -it --rm=true \
-    --memory-swappiness=0 \
-	--name PostgreSQLDemo \
-	--network demo-net \
-	-e POSTGRES_USER=hibernate \
-	-e POSTGRES_PASSWORD=hibernate \
-	-e POSTGRES_DB=hibernate_db \
-	-p 5432:5432 postgres:10.5
+@Path("todos")
+@Consumes(MediaType.APPLICATION_JSON)
+@Produces(MediaType.APPLICATION_JSON)
 ----
 
-=== Run PostgreSQL on Kubernetes (minikube)
+=== Persistering af data
 
-----
-kubectl run postgresqldemo \
-	--image=postgres:10.5 \
-	--port=5432 \
-	--env=POSTGRES_USER=hibernate \
-	--env=POSTGRES_PASSWORD=hibernate \
-	--env=POSTGRES_DB=hibernate_db \
-	--image-pull-policy=IfNotPresent
-kubectl expose deployment postgresqldemo --type=NodePort	
+Hibernate
+
+[source,java]
 ----
 
-https://quarkus.io/guides/kubernetes-guide[quarkus.io - Kubernetes Guide]
-
-== quarkus-fagligfredag-demo
-
-We use Quarkus 1.0.0.Final.
-
-=== Building and running the code
-
-To run the application in interactive mode (developer mode) [PostgreSQL *need* to be up and runnning]:
-
-[source,bash]
-----
-mvn compile quarkus:dev
-----
-
-First compile it [PostgreSQL *need* to be up and runnning]:
-
-[source,bash]
-----
-mvn package
-----
-
-Compilation will take a bit longer, so this step is disabled by default; let's build again by enabling the native profile [PostgreSQL *need* to be up and runnning]:
-
-[source,bash]
-----
-mvn package -Pnative
-----
-
-By default, the native executable is tailored for your operating system (Linux, macOS, Windows etc). Because the container may not use the same executable format as the one produced by your operating system, we will instruct the Maven build to produce an executable from inside a container [PostgreSQL *need* to be up and runnning]:
-
-Start app nativ
-
-[source,bash]
-----
-target/quarkus-fagligfredag-demo-0.0.1-SNAPSHOT-runner
+@Inject
+EntityManager entityManager;
 ----
 
 
-[source,bash]
-----
-mvn package -Pnative -Dnative-image.docker-build=true
-----
-
-If we don't have PostgreSQL up and runnning when building - we just use [PostgreSQL *need not* to be up and runnning]:
-
-[source,bash]
-----
-mvn clean install -Ppostgresql -Pnative
-----
-
-By default, the native executable is tailored for your operating system (Linux, macOS, Windows etc). Because the container may not use the same executable format as the one produced by your operating system, we will instruct the Maven build to produce an executable from inside a container [PostgreSQL *need not* to be up and runnning]:
-
-[source,bash]
-----
-mvn clean install -Ppostgresql -Pnative -Dnative-image.docker-build=true
-----
-
-The profile `postgresql` will tell `fabric8` to spind up a container with `PostgreSQL` for the test.
-
-
-Build Docker image
-
-[source,bash]
-----
-docker build -f src/main/docker/Dockerfile.native -t ls -la  .
-----
-
-Start container from image using Docker
-
-[source,bash]
-----
-docker run -i --rm -p 8080:8080 --name quarkusdemo --network demo-net demo/quarkus-fagligfredag-demo
-----
-
-Start container from image using Kubernetes (minikube)
-
-[source,bash]
-----
-kubectl run quarkusdemo --image=demo/quarkus-fagligfredag-demo:latest --port=8080 --image-pull-policy=IfNotPresent
-kubectl expose deployment quarkusdemo --type=NodePort
-----
-
-[source,bash]
-----
-echo $(minikube service quarkusdemo --url)/todos
-curl curl $(minikube service quarkusdemo --url)/todos
-----
-
-We have added this dependency to `pom.xml`
-
+*Wildfly* - persistence.xml
 [source,xml]
 ----
-<!-- Enable Kubernetes support -->
-<dependency>
-	<groupId>io.quarkus</groupId>
-	<artifactId>quarkus-kubernetes</artifactId>
-</dependency>
+<persistence xmlns="http://xmlns.jcp.org/xml/ns/persistence"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence
+    http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd"
+	version="2.1">
+
+	<persistence-unit name="ToDoPU" transaction-type="JTA">
+		<description>My ToDo entities</description>
+ 		<jta-data-source>jboss/datasources/ToDoDS</jta-data-source>
+		<properties>
+			<property name="hibernate.dialect" 
+				value="org.hibernate.dialect.PostgreSQL95Dialect" />
+			<property name="hibernate.show_sql" 
+				value="false" />
+			<property name="hibernate.format_sql" 
+				value="true" />
+			<property name="javax.persistence.schema-generation.database.action" 
+				value="drop-and-create" />
+			<property name="javax.persistence.validation.mode" 
+				value="NONE" />
+		</properties>
+	</persistence-unit>
+
+</persistence>
 ----
 
-and we get generated this Kubernetes resources
-
-* link:quarkus-demo/target/wiring-classes/META-INF/kubernetes/kubernetes.yml[kubernetes.yml]
-* link:quarkus-demo/target/wiring-classes/META-INF/kubernetes/kubernetes.json[kubernetes.json]
-
-
-*src/main/docker/Dockerfile.native*
-
-----
-FROM registry.fedoraproject.org/fedora-minimal
-WORKDIR /work/
-COPY target/*-runner /work/application
-RUN chmod 775 /work
-EXPOSE 8080
-CMD ["./application", "-Dquarkus.http.host=0.0.0.0"]
-----
-
-https://quarkus.io/guides/building-native-image-guide.html[quarkus.io - Building Native Image Guide]
-https://quarkus.io/guides/ap4k[quarkus.io - Generating Kubernetes resources]
-
-
-https://dmp.fabric8.io/[fabric8io/docker-maven-plugin]
-
-=== Application Configuration
-
-*quarkus-fagligfredag-demo/src/main/resources/application.properties*
-
+*Quarkus* - application.properties
 ----
 quarkus.datasource.url=jdbc:postgresql://PostgreSQLDemo:5432/hibernate_db
 quarkus.datasource.driver=org.postgresql.Driver
@@ -220,111 +166,52 @@ quarkus.datasource.password=hibernate
 quarkus.datasource.max-size=8
 quarkus.datasource.min-size=2
 quarkus.hibernate-orm.database.generation=drop-and-create
-quarkus.hibernate-orm.log.sql=true
-
-quarkus.security.file.enabled=true
-quarkus.security.file.users=demo-users.properties
-quarkus.security.file.roles=demo-roles.properties
-quarkus.security.file.auth-mechanism=BASIC
-quarkus.security.file.realm-name=MyDemoRealm
-
-quarkus.security-providers=SunRsaSign,SunJCE
-
-pingMessage=PingMicroProfile
+quarkus.hibernate-orm.log.sql=false
 ----
 
-
-*quarkus-fagligfredag-demo/src/main/java/dk/jarry/fagligfredag/ping/bondary/PingResource.java*
+=== Sikkerhed
 
 [source,java]
 ----
-@ConfigProperty(name = "pingMessage")
-String message;
+@Inject
+Principal principal;
 ----
-
-https://quarkus.io/guides/application-configuration-guide[quarkus.io - Application Configuration]
-
-https://quarkus.io/guides/cdi-reference[quarkus.io - Cdi Reference]
-
-
-=== Rest webservice
-
-*No need* for a class to extends javax.ws.rs.ApplicationPath
 
 [source,java]
 ----
-@ApplicationPath("/")
-public class JAXRSConfiguration extends Application {
-}
-----
-
-https://quarkus.io/guides/rest-json-guide[quarkus.io - Rest Json Guide]
-
-=== Camel
-
-https://camel.apache.org/direct.html[Direct Component]
-
-=== PostgreSQL and Hibernate
-
-*quarkus-fagligfredag-demo/src/main/resources/application.properties*
-
-----
-quarkus.datasource.url=jdbc:postgresql://PostgreSQLDemo:5432/hibernate_db
-quarkus.datasource.driver=org.postgresql.Driver
-quarkus.datasource.username=hibernate
-quarkus.datasource.password=hibernate
-quarkus.datasource.max-size=8
-quarkus.datasource.min-size=2
-quarkus.hibernate-orm.database.generation=drop-and-create
-quarkus.hibernate-orm.log.sql=true
-----
-
-- link:quarkus-fagligfredag-demo/src/main/java/dk/jarry/fagligfredag/todo/entity/ToDo.java[ToDo.java]
-- link:quarkus-fagligfredag-demo/src/main/java/dk/jarry/fagligfredag/todo/bondary/ToDoService.java[ToDoService.java]
-
-
-Configuration can be done in `persistence.xml`. 
-
-https://quarkus.io/guides/hibernate-orm-guide[quarkus.io - Hibernate Orm Guide]
-
-=== Security
-
-*quarkus-fagligfredag-demo/src/main/resources/application.properties*
-
-----
-quarkus.security.file.enabled=true
-quarkus.security.file.users=demo-users.properties
-quarkus.security.file.roles=demo-roles.properties
-quarkus.security.file.auth-mechanism=BASIC
-quarkus.security.file.realm-name=MyDemoRealm
-quarkus.security.security-providers=SunRsaSign,SunJCE
-----
-
-- link:quarkus-fagligfredag-demo/src/main/resources/demo-users.properties[demo-users.properties]
-- link:quarkus-fagligfredag-demo/src/main/resources/demo-roles.properties[demo-roles.properties]
-- link:quarkus-fagligfredag-demo/src/main/java/dk/jarry/fagligfredag/todo/bondary/ToDoResource.java[ToDoResource.java]
-
-[source,java]
-----
-public class ToDoResource {
-
-	@POST
-	@RolesAllowed("user")
-	public ToDo create(ToDo toDo) {
-	
-	@GET
-	@PermitAll
-	public List<ToDo> list(
+@Inject
+JsonWebToken jwt;
 ----
 
 
-https://quarkus.io/guides/security-guide[quarkus.io - Security Guide]
+[source,bash]
+----
+
+export TOKEN="eyJraWQiOiIvcHJpdmF0ZUtleS5wZW0iLCJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJodHRwczovL3F1YXJrdXMuaW8vdXNpbmctand0LXJiYWMiLCJqdGkiOiJhLTEyMyIsInN1YiI6Im1pY2JuLXVzaW5nLWp3dC1yYmFjIiwidXBuIjoibWljYm5AcmVkcGlsbC1saW5wcm8uY29tIiwicHJlZmVycmVkX3VzZXJuYW1lIjoibWljYm4iLCJhdWQiOiJ1c2luZy1qd3QtcmJhYyIsImJpcnRoZGF0ZSI6IjIwMDEtMDctMTMiLCJyb2xlTWFwcGluZ3MiOnsiZ3JvdXAxIjoiR3JvdXAxTWFwcGVkUm9sZSIsImdyb3VwMiI6Ikdyb3VwMk1hcHBlZFJvbGUifSwiZ3JvdXBzIjpbIkVjaG9lciIsIlRlc3RlciIsIlN1YnNjcmliZXIiLCJncm91cDIiLCJ1c2VyIl0sImlhdCI6MTU3NjM0MTk2OSwiYXV0aF90aW1lIjoiTnVtZXJpY0RhdGV7MTU3NjM0MTk2OSAtPiAxNC1EZWMtMjAxOSAxNzo0NjowOSBDRVR9IiwiZXhwIjoxNTc2MzQyMjY5fQ.FYGtGIT_iU2hEF2F_XvjMXyCzCD7_Q4UXpNwhRJhpbRTqhFOeqQ-1yJllr6xs1oXH7OdRNovmqXjVZp3NEARwF7we-bm_h1TFPOQECeHGl8jvE7Ig9Cx0wL0QDxCUQKLQ1pOa9RSwy-_BkkJ0d3Nukn-Q871a6wm34syIWYB10KWWnm9CBRpeTRkA9YO-_xNhFqkmeDSkUfdHvoRbXbHEgg_TtB3_IOJp1xtC5xmrytm0Q-CmwdxnpHwAPfgVCJLPqg2bI_20_ESkKvLeMkFWTV3ReHSr4GNkEWOAcmCCajP9kizvftoPO2WyB0AkcdgzPLgW4_5D6Sd3L64ER8S9Q"
+
+curl -v http://localhost:8080/todos \
+	-H 'Accept: application/json' \
+	-H 'Authorization: Bearer '$TOKEN'' \
+	-H 'Content-Type: application/json' \
+	-d '{"subject":"Hello from Quarkus","body":"Content","priority": 1,"importens": 10,"owner" : "Duke"}'
+----
 
 === MicroProfile Health
 
-http://localhost:8080/health[Health]
+----
+@Health
+----
+
+[source,bash]
+----
+curl -X GET \
+	http://localhost:8080/health \
+	-H 'Accept: application/json' 
+----
+
 
 https://quarkus.io/guides/health-guide[quarkus.io - Health Guide]
+
 
 === MicroProfile Metrics
 
@@ -361,442 +248,127 @@ OpenAPI and Swagger-UI only works in dev and test mode.
 
 https://quarkus.io/guides/openapi-swaggerui-guide[quarkus.io - OpenAPI SwaggerUI Guide]
 
-== wildfly-demo
-
-We use WildFly 17.0.1.Final
 
 
-=== Building and running the code
 
-[source,bash]
-----
-mvn clean package
-----
+== Bookstore gennemgang
 
-[source,bash]
-----
-docker build  -t demo/wildfly-fagligfredag-demo .
-----
+=== Author JAX-RX + service
 
-[source,bash]
-----
-docker run -i --rm -p 8180:8080 -p 10090:9990 --name wildflydemo --network demo-net demo/wildfly-fagligfredag-demo
-----
+=== Book JAX-RX + extends PanacheEntity
 
-*Dockerfile* (docker build  -t demo/wildfly-fagligfredag-demo .)
-----
-FROM jarrydk/wildfly:17.0.1.Final
+=== Publisher RestController/RequestMapping (Spring) + service
 
-MAINTAINER Michael Bornholdt Nielsen, jarry.dk
+=== Test @QuarkusTest
 
-RUN ${WILDFLY_HOME}/bin/add-user.sh -a -u 'micbn' -p 'MyPassword' -g 'user'
 
-RUN rm ${WILDFLY_HOME}/standalone/configuration/standalone.xml
-ADD standalone.xml ${WILDFLY_HOME}/standalone/configuration/
-ADD ./modules/ ${WILDFLY_HOME}/modules/
-COPY target/wildfly-demo.war ${DEPLOYMENT_DIR}
-----
-
-*Dockerfile* (docker build -t jarrydk/wildfly:17.0.1.Final .)
-----
-FROM jarrydk/java:11
-
-MAINTAINER Michael Bornholdt Nielsen, jarry.dk
-
-ENV VERSION 17.0.1.Final
-ENV INSTALL_DIR /opt
-ENV WILDFLY_HOME ${INSTALL_DIR}/wildfly-${VERSION}
-ENV DEPLOYMENT_DIR ${WILDFLY_HOME}/standalone/deployments/
-ENV CONFIGURATION_DIR ${WILDFLY_HOME}/standalone/configuration
-
-RUN useradd -b /opt -m -s /bin/sh -d ${INSTALL_DIR} serveradmin && echo serveradmin:serveradmin | chpasswd
-RUN curl -O https://download.jboss.org/wildfly/${VERSION}/wildfly-${VERSION}.zip \
-    && unzip wildfly-${VERSION}.zip -d ${INSTALL_DIR} \
-    && rm wildfly-${VERSION}.zip \
-    && chown -R serveradmin:serveradmin /opt \
-    && chmod a+x ${WILDFLY_HOME}/bin/standalone.sh \
-    && chmod -R a+rw ${INSTALL_DIR}
-USER serveradmin
-ENTRYPOINT ${WILDFLY_HOME}/bin/standalone.sh -b=0.0.0.0
-EXPOSE 8080
-EXPOSE 8443
-----
-
-*Dockerfile* (docker build -t jarrydk/java:11 .)
-----
-FROM centos:7
-
-MAINTAINER Michael Bornholdt Nielsen, jarry.dk
-
-RUN yum update -y \
-  && mkdir /usr/lib/jvm/ \
-  && yum -y install unzip \
-  && curl -L -o OpenJDK11U-jdk_x64_linux_hotspot_11.0.3_7.tar.gz https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.3%2B7/OpenJDK11U-jdk_x64_linux_hotspot_11.0.3_7.tar.gz \
-  && tar xvf OpenJDK11U-jdk_x64_linux_hotspot_11.0.3_7.tar.gz -C /usr/lib/jvm/ \
-  && yum clean all \
-  && rm OpenJDK11U-jdk_x64_linux_hotspot_11.0.3_7.tar.gz \
-  && rm -rf /var/cache/yum
-
-ENV JAVA_HOME /usr/lib/jvm/jdk-11.0.3+7
-
-ENV PATH "$PATH":/${JAVA_HOME}/bin:.:
-----
-
-=== Application Configuration
-
-*wildfly-fagligfredag-demo/src/main/java/dk/jarry/fagligfredag/ping/bondary/PingResource.java*
-
-[source,java]
-----
-@Inject
-@ConfigProperty(name = "pingMessage")
-String message;
----- 
-
-*wildfly-fagligfredag-demo/src/main/resources/META-INF/microprofile-config.properties* (ordinal=100)
-
-----
-pingMessage=PingMicroProfile
-----
-
-*Start WildFly using Env for config* (ordinal=300)
+== Appendix
 
 [source,bash]
 ----
-#!/bin/bash
 
-export pingMessage="PingMicroProfile In Env"
+export TOKEN="eyJraWQiOiIvcHJpdmF0ZUtleS5wZW0iLCJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJodHRwczovL3F1YXJrdXMuaW8vdXNpbmctand0LXJiYWMiLCJqdGkiOiJhLTEyMyIsInN1YiI6Im1pY2JuLXVzaW5nLWp3dC1yYmFjIiwidXBuIjoibWljYm5AcmVkcGlsbC1saW5wcm8uY29tIiwicHJlZmVycmVkX3VzZXJuYW1lIjoibWljYm4iLCJhdWQiOiJ1c2luZy1qd3QtcmJhYyIsImJpcnRoZGF0ZSI6IjIwMDEtMDctMTMiLCJyb2xlTWFwcGluZ3MiOnsiZ3JvdXAxIjoiR3JvdXAxTWFwcGVkUm9sZSIsImdyb3VwMiI6Ikdyb3VwMk1hcHBlZFJvbGUifSwiZ3JvdXBzIjpbIkVjaG9lciIsIlRlc3RlciIsIlN1YnNjcmliZXIiLCJncm91cDIiLCJ1c2VyIl0sImlhdCI6MTU3NjYwNjM5NiwiYXV0aF90aW1lIjoiTnVtZXJpY0RhdGV7MTU3NjYwNjM5NiAtPiAxNy1EZWMtMjAxOSAxOToxMzoxNiBDRVR9IiwiZXhwIjoxNTc2NjA2Njk2fQ.JTgLJ7hZbkorNEg0OTyNPNAQ8_7v23ElXX2oZNBWF-19I6k0BcnIPnydHs4Dylj3JsFtgeWSvhniv4dcEwBGphqLWKor_hG305Xv5YDiWvj0o-9xhhEDALRvO5ycjXwt69E8YN-YA-GdYgLyLhStSUZFjN3vMWQTO2U9UaO8jLcwZ239Z7rtw5XFy3vC9TxvDlGaPOiyBJSwagpi2oqIcdvlTHW6pB-J3lM0B5gheHlM2btHYnqFKsviCI5Jvo9TziM8Zm1rPi4xq0yZn8Es5zVLMvrOpji5pqlCC3TkSKSomnRCC3NFKLmxGCYYM_m9KRJWGbJCsmACY30ptM6o2A"
 
-WILDFLY_HOME=/opt/redhat/wildfly/wildfly-17.0.1.Final
+curl -v http://localhost:8080/todos \
+	-H 'Accept: application/json' \
+	-H 'Authorization: Bearer '$TOKEN'' \
+	-H 'Content-Type: application/json' \
+	-d '{"subject":"Hello from Quarkus","body":"Content","priority": 1,"importens": 10,"owner" : "Duke"}'
 
-$WILDFLY_HOME/bin/standalone.sh \
-	-b=0.0.0.0 -bmanagement=0.0.0.0 \
-	-c standalone_w-demo.xml \
-	-Djboss.socket.binding.port-offset=100 
+curl -v http://localhost:8080/todos \
+	-H 'Accept: application/json' \
+	-H 'Authorization: Bearer '$TOKEN'' \
+	-H 'Content-Type: application/json' \
+	-d '{"subject":"Hello from Quarkus 2","body":"Content 2","priority": 1,"importens": 10,"owner" : "Duke"}'	
 ----
-
-*Start WildFly using Properties for config* (ordinal=400)
-
-[source,bash]
-----
-#!/bin/bash
-
-WILDFLY_HOME=/opt/redhat/wildfly/wildfly-17.0.1.Final
-
-$WILDFLY_HOME/bin/standalone.sh \
-	-b=0.0.0.0 -bmanagement=0.0.0.0 \
-	-c standalone_w-demo.xml \
-	-Djboss.socket.binding.port-offset=100 \
-	-DpingMessage="PingMicroProfile In Properties"
-----
-
-https://microprofile.io/project/eclipse/microprofile-config[Configuration for MicroProfile]
-
-=== Rest webservice
-
-We *need* for a class to extends javax.ws.rs.ApplicationPath
-
-[source,java]
-----
-@ApplicationPath("/resources")
-public class JAXRSConfiguration extends Application {
-}
-----
-
-=== PostgreSQL and Hibernate
-
-*src/main/resources/META-INF/persistence.xml*
-
-[source,xml]
-----
-<persistence xmlns="http://xmlns.jcp.org/xml/ns/persistence"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence
-             http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd"
-	version="2.1">
-
-	<persistence-unit name="ToDoPU" transaction-type="JTA">
-		<description>My ToDo entities</description>
- 		<jta-data-source>jboss/datasources/ToDoDS</jta-data-source>
-		<properties>
-			<property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQL95Dialect" />
-			<property name="hibernate.show_sql" value="true" />
-			<property name="hibernate.format_sql" value="true" />
-			<property name="javax.persistence.schema-generation.database.action" value="drop-and-create" />
-			<property name="javax.persistence.validation.mode" value="NONE" />
-		</properties>
-	</persistence-unit>
-
-</persistence>
-----
-
-link:wildfly-demo/src/main/resources/META-INF/persistence.xml[persistence.xml]
-
-*standalone.xml*
-
-[source,xml]
-----
-
- <subsystem xmlns="urn:jboss:domain:datasources:5.0">
- <!-- CUT --> 
- 	<datasources>
-		 <datasource jndi-name="java:jboss/datasources/ToDoDS" pool-name="ToDoDS" enabled="true" use-java-context="true">
-           <connection-url>jdbc:postgresql://PostgreSQLDemo:5432/hibernate_db</connection-url>
-           <driver>postgresql</driver>
-             <security>
-               <user-name>hibernate</user-name>
-               <password>hibernate</password>
-             </security>
-        </datasource>
-        <!-- CUT --> 
-        <drivers>
-            <driver name="postgresql" module="org.postgresql.jdbc">
-           	<xa-datasource-class>org.postgresql.xa.PGXADataSource</xa-datasource-class>
-            </driver>
-----
-
-link:wildfly-fagligfredag-demo/standalone.xml[standalone.xml]
-
-*modules*
-
-- modules/org/postgresql/jdbc/main/module.xml
-- modules/org/postgresql/jdbc/main/org.postgresql.postgresql-42.2.5.jar
-
-[source,bash]
-----
-cp wildfly-fagligfredag-demo/modules/  ${WILDFLY_HOME}/modules/
-----
-
-=== Security
 
 
 [source,bash]
 ----
-${WILDFLY_HOME}/bin/add-user.sh -a -u 'micbn' -p 'MyPassword' -g 'user'
+docker network inspect demo-net
 ----
-
-We need to add `@Stateless` for `@RolesAllowed` and `@PermitAll` to work!  
-
-[source,java]
-----
-@Path("todos")
-@Consumes(MediaType.APPLICATION_JSON)
-@Produces(MediaType.APPLICATION_JSON)
-@Stateless
-public class ToDoResource {
-
-	@POST
-	@RolesAllowed("user")
-	public ToDo create(ToDo toDo) {
-	
-	@GET
-	@PermitAll
-	public List<ToDo> list(
-----
-
-- link:wildfly-fagligfredag-demo/src/main/java/dk/jarry/fagligfredag/todo/bondary/ToDoResource.java[ToDoResource.java]
-
-
-https://access.redhat.com/documentation/en-us/red_hat_jboss_enterprise_application_platform/6.4/html/administration_and_configuration_guide/sect-add-user_script_command_line_examples[Add-user Script Command Line Examples - Red Hat Customer Portal]
-
-=== MicroProfile Health
-
-http://localhost:10090/health[Health]
-
-https://microprofile.io/project/eclipse/microprofile-health[MicroProfile Health]
-
-=== MicroProfile Metrics
 
 [source,bash]
 ----
-curl -H"Accept: application/json" http://localhost:10090/metrics/application
+docker network create demo-net
 ----
 
-https://microprofile.io/project/eclipse/microprofile-metrics[Eclipse Microprofile Metrics]
-
-=== OpenAPI and SwaggerUI
-
-http://localhost:8180/openapi[OpenAPI]
-
-[source,java]
-----
-@ApplicationPath("/")
-public class JAXRSConfiguration extends Application {
-
-	public JAXRSConfiguration(@Context ServletConfig servletConfig) {
-		super();
-		OpenAPI oas = new OpenAPI();
-		Info info = new Info() 
-				.title("ToDo demo app") 
-				.description("This is a sample ToDO app.") 				
-				.contact(new Contact() 
-						.email("MichaelBornholdtNielsen@gmail.com")) 
-				.license(new License() 
-						.name("Apache 2.0") 
-						.url("http://www.apache.org/licenses/LICENSE-2.0.html"));
-
-		oas.info(info);
-		SwaggerConfiguration oasConfig = new SwaggerConfiguration() 
-				.openAPI(oas) 
-				.prettyPrint(true) 
-				.resourcePackages(Stream.of("dk.jarry.todo.bondary")
-				.collect(Collectors.toSet()));
-----
-
-
-Hard work - Wildfly do not support https://microprofile.io/project/eclipse/microprofile-open-api[MicroProfile OpenAPI]
-
-== Change Quarkus compare to WildFly
-
-- src/main/java/dk/jarry/fagligfredag/JAXRSConfiguration.java
-	* File added
-- src/main/resources/META-INF/persistence.xml
-	* File added
-- src/main/resources/META-INF/microprofile-config.properties
-	* Quarkus use src/main/resources/application.properties
-- src/main/java/dk/jarry/fagligfredag/todo/bondary/ToDoService.java
-	* Add @PersistenceContext(unitName = "ToDOPU", type = PersistenceContextType.TRANSACTION)
-- src/main/webapp/WEB-INF/jboss-web.xml
-	* Used to have this app in root 	
-	
-== Links
-
-https://medium.com/@brianbmathews/getting-started-with-minikube-docker-container-images-for-testing-kubernetes-locally-on-mac-e39adb60bd41[Getting Started with Minikube & Docker Container Images, for testing Kubernetes locally on Mac.]
-
-https://medium.com/skillshare-team/from-docker-compose-to-minikube-d94cbe97acda[From Docker Compose to Minikube]
-
-== Sample requests
-
-BasePath for Rest services are 
-
-http://localhost:8080[http://localhost:8080] for Quarkus
-
-http://localhost:8180/resources[http://localhost:8180/resources] for Wildfly - we need to add `resources` or another name.
-
-=== Quarkus
-
-*Create ToDo - Local or Docker using Quarkus*
 [source,bash]
 ----
-curl -X POST \
-  http://localhost:8080/todos \
-  -H 'Accept: application/json' \
-  -H 'Authorization: Basic bWljYm46TXlQYXNzd29yZA==' \
-  -H 'Content-Type: application/json' \
-  -d '{
-"subject":"Hello from Quarkus",
-"body":"We need content",
-"priority": 1,
-"importens": 10,
-"owner" : "Duke"
-}'
+docker run --ulimit memlock=-1:-1 \
+	-it --rm=true --memory-swappiness=0 \
+	--name PostgreSQLDemo \
+	--network demo-net \
+	-e POSTGRES_USER=hibernate \
+	-e POSTGRES_PASSWORD=hibernate \
+	-e POSTGRES_DB=hibernate_db \
+	-p 5432:5432 postgres:10.5
 ----
 
-*Read ToDo - Local or Docker using Quarkus*
 [source,bash]
 ----
-curl -X GET \
-	http://localhost:8080/todos/10 \
-	-H 'Accept: application/json'
+docker build -f src/main/docker/Dockerfile.native -t quarkus-fagligfredag-demo .
 ----
 
-*Update ToDo - Local or Docker using Quarkus*
 [source,bash]
 ----
-curl -X PUT \
-  http://localhost:8080/todos/10 \
-  -H 'Accept: application/json' \
-  -H 'Authorization: Basic bWljYm46TXlQYXNzd29yZA==' \
-  -H 'Content-Type: application/json' \
-  -d '{
-"subject":"Hello from Quarkus - Update",
-"body":"We need content",
-"priority": 1,
-"importens": 10,
-"owner" : "Duke"
-}'
+docker run -i --rm --name quarkus-fagligfredag --network demo-net -p 8080:8080 quarkus-fagligfredag-demo
 ----
 
-*Delete ToDos - Local or Docker using Quarkus*
-----
-curl -X DELETE \
-  http://localhost:8080/todos/10 \
-  -H 'Accept: application/json' \
-  -H 'Authorization: Basic bWljYm46TXlQYXNzd29yZA=='
-----
+Start postgres på minikube.
 
-*Read all ToDos - Local or Docker using Quarkus*
 [source,bash]
 ----
-curl -X GET \
-	http://localhost:8080/todos \
-  	-H 'Accept: application/json'
+kubectl run postgresqldemo \
+	--image=postgres:10.5 \
+	--port=5432 \
+	--env=POSTGRES_USER=hibernate \
+	--env=POSTGRES_PASSWORD=hibernate \
+	--env=POSTGRES_DB=hibernate_db \
+	--image-pull-policy=IfNotPresent
+
+kubectl expose deployment postgresqldemo --type=NodePort
 ----
 
-*Read health - Local or Docker using Quarkus*
+Start quarkus-fagligfredag-demo på minikube.
+
 [source,bash]
 ----
-curl -X GET \
-	http://localhost:8080/health \
-  	-H 'Accept: application/json'
+kubectl run quarkus-fagligfredag-demo \
+	--port=8080 \
+	--image=quarkus-fagligfredag-demo:latest \
+	--image-pull-policy=IfNotPresent
+
+kubectl expose deployment quarkus-fagligfredag-demo --type=LoadBalancer	--name=quarkus-fagligfredag-demo-service
 ----
 
-*Read metrics - Local or Docker using Quarkus*
+
 [source,bash]
 ----
-curl -X GET \
-	http://localhost:8080/metrics \
-	-H 'Accept: application/json' 
+kubectl get all
 ----
 
-*Read metrics (application) - Local or Docker using Quarkus*
+
 [source,bash]
 ----
-curl -X GET \
-	http://localhost:8080/metrics/application \
-	-H 'Accept: application/json' 
+kubectl delete deployment.apps/quarkus-fagligfredag-demo
 ----
 
-=== Wildfly
-
-*NB* We use management interface to get health and metrics data.
-
-*Create ToDo - Local or Docker using Wildfly*
 [source,bash]
 ----
-curl -X POST \
-  http://localhost:8180/resources/todos \  
-  -H 'Accept: application/json' \
-  -H 'Authorization: Basic bWljYm46TXlQYXNzd29yZA==' \
-  -H 'Content-Type: application/json' \
-  -d '{
-"subject":"Hello from Wildfly",
-"body":"We need content",
-"priority": 1,
-"importens": 10,
-"owner" : "Duke"
-}'
+minikube dashboard --url
+minikube service pgadmin --url
+minikube service postgresqldemo --url
+minikube service quarkus-fagligfredag-demo-service --url
 ----
 
-*Read health - Local or Docker using Quarkus*
 [source,bash]
 ----
-curl -X GET \
-	http://localhost:10090/health \
-  	-H 'Accept: application/json'
+eval $(minikube docker-env)
 ----
 
-*Read metrics - Local or Docker using Quarkus*
-[source,bash]
-----
-curl -X GET \
-	http://localhost:10090/metrics \
-	-H 'Accept: application/json' 
-----
 
-*Read metrics (application) - Local or Docker using Quarkus*
 [source,bash]
 ----
-curl -X GET \
-	http://localhost:10090/metrics/application \
-	-H 'Accept: application/json' 
+eval $(minikube docker-env -u)
+----

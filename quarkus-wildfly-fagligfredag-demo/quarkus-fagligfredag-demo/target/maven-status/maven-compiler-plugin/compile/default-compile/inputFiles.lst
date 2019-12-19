@@ -1,0 +1,6 @@
+/home/mni/Git/jarryDk/quarkus-wildfly-faglig-fredag/quarkus-wildfly-fagligfredag-demo/quarkus-fagligfredag-demo/src/main/java/dk/jarry/fagligfredag/todo/boundary/ToDoService.java
+/home/mni/Git/jarryDk/quarkus-wildfly-faglig-fredag/quarkus-wildfly-fagligfredag-demo/quarkus-fagligfredag-demo/src/main/java/dk/jarry/fagligfredag/todo/entity/ToDo.java
+/home/mni/Git/jarryDk/quarkus-wildfly-faglig-fredag/quarkus-wildfly-fagligfredag-demo/quarkus-fagligfredag-demo/src/main/java/dk/jarry/fagligfredag/ping/boundary/PingResource.java
+/home/mni/Git/jarryDk/quarkus-wildfly-faglig-fredag/quarkus-wildfly-fagligfredag-demo/quarkus-fagligfredag-demo/src/main/java/dk/jarry/fagligfredag/todo/boundary/ToDoResource.java
+/home/mni/Git/jarryDk/quarkus-wildfly-faglig-fredag/quarkus-wildfly-fagligfredag-demo/quarkus-fagligfredag-demo/src/main/java/dk/jarry/fagligfredag/todo/control/DemoRealm.java
+/home/mni/Git/jarryDk/quarkus-wildfly-faglig-fredag/quarkus-wildfly-fagligfredag-demo/quarkus-fagligfredag-demo/src/main/java/dk/jarry/fagligfredag/todo/control/DemoPrincipal.java

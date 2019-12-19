@@ -1,0 +1,7 @@
+dk/jarry/fagligfredag/ping/boundary/PingResource.class
+dk/jarry/fagligfredag/todo/boundary/ToDoService.class
+dk/jarry/fagligfredag/todo/entity/ToDo.class
+dk/jarry/fagligfredag/todo/boundary/ToDoResource.class
+dk/jarry/fagligfredag/todo/boundary/ToDoService$ErrorMapper.class
+dk/jarry/fagligfredag/todo/control/DemoPrincipal.class
+dk/jarry/fagligfredag/todo/control/DemoRealm.class
